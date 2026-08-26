@@ -123,7 +123,58 @@ walked along it until they found where it ends.
 
 ## Mitigations checklist for organizations
 
-*(next section)*
+For a rollout in 2026, ordered roughly by how often each item decides real
+incidents:
+
+**Credential policy**
+
+1. **Device-bound over synced where the stakes justify it.** Security keys or
+   platform device-bound passkeys for admins, executives, finance, and
+   privileged IT; synced consumer passkeys are acceptable for ordinary
+   workforce accounts *only if* items 3–8 below hold.
+2. **Retire weaker fallbacks on a schedule.** Once an account has a passkey,
+   SMS/email OTP and bare push approval should be disabled for it — not
+   discouraged, disabled. Weakest-factor-wins is the most common deployment
+   failure.
+3. **Attestation where you can.** Know which authenticators you accept so
+   "software authenticator running on an unknown VM" is a policy decision, not
+   an accident.
+
+**Recovery (the part everyone under-engineers)**
+
+4. **Make recovery as strong as login.** Verified identity re-enrollment with
+   human review for high-risk roles; never a bare email/SMS code.
+5. **No silent enrollments.** New credential registration triggers a user
+   notification out-of-band plus an audit event. A passkey the user didn't
+   register is the incident.
+6. **Delay windows + notifications on recovery changes.** Attackers want
+   speed; give victims a window to notice.
+
+**Session and endpoint**
+
+7. **Pair with conditional access / device health checks** for sensitive apps.
+   Passkeys stop credential theft; they do not stop malware riding an
+   authenticated session.
+8. **Short sessions + re-auth for high-risk actions** (payment runs, role
+   changes, bulk exports) rather than trusting one strong login indefinitely.
+
+**Operations**
+
+9. **Alert on registration events**, not just failed logins. Registration
+   volume is tiny compared to auth volume, which makes it high-signal.
+10. **Offboard credentials like access cards.** Device loss, termination, and
+    vendor offboarding include revoking registered passkeys — inventory them
+    per user.
+11. **Run breach-exposure checks on workforce accounts** (e.g., periodic HIBP
+    lookups during access reviews): breached passwords elsewhere still burn
+    the sync accounts your synced passkeys depend on.
+
+**Rollout sequencing**
+
+12. **Deploy phishing-resistant factors to the attacked groups first.** The
+    Mirage2FA wave hit organizations through MFA-prompt bombing — helpdesk and
+    executives see that first. Sequence by who gets attacked, not by
+    department chart order.
 
 ## Sources
 
