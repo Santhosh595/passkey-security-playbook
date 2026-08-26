@@ -180,3 +180,7 @@ incidents:
 
 - The Hacker News, August 2026: [New passkey attacks can recover synced private keys / bypass phishing-resistant MFA](https://thehackernews.com/2026/08/new-passkey-attacks-can-recover-synced.html)
 - Mirage2FA AiTM kit vs ~4,500 US/EU orgs; WhatsApp shipping passkeys days later — reported August 2026 (AI/cyber research digest, 2026-08-26)
+
+## License
+
+[MIT](LICENSE)
