@@ -50,7 +50,137 @@ checklist for organizations rolling out passkeys in 2026.
 The honest summary: passkeys remove the *front door* that phishing kits were
 built to walk through. Everything after this point is about the other doors.
 
+## Where passkeys still fail
+
+### 1. Synced-key ecosystems
+
+Most passkeys people use today are not hardware-bound. They are generated once
+and then replicated through a cloud sync service so they follow the user across
+laptop, tablet, and phone. That trade is deliberate — it is what makes passkeys
+survive a lost phone — but it changes the threat model from "steal the key out
+of the secure enclave" to "compromise the ecosystem that escrows the key":
+
+- The sync account becomes a high-value target. Its protections (password,
+  recovery email, legacy sessions on a decade-old laptop) are now the real
+  front door to every synced passkey.
+- Old devices linger. A phone in a drawer, still signed into the same cloud
+  account, holds or can fetch the same credentials years later.
+- August 2026 research covered by The Hacker News described attacks that can
+  recover synced private keys — the class of result that turns "the key never
+  leaves my device" marketing into "the key leaves your device whenever the
+  provider decides it should".
+
+None of this makes synced passkeys bad. It makes them *account-compromise
+targets* rather than *phishing targets*, which is a different problem that
+password managers already taught us: convenience features concentrate risk.
+
+### 2. Device compromise
+
+A successful WebAuthn ceremony says "a person holding this authenticator was
+present". It says nothing about what else is running on that machine:
+
+- Malware running in the user's session does not need to export anything. It
+  can wait for an unlocked device, invoke the authenticator at the right
+  moment, or simply ride the authenticated cookie jar afterwards.
+- On a compromised endpoint, "approve this prompt" is one more dialog the
+  attacker's tooling can click. Local malware can also register *new*
+  credentials on accounts it controls while the legitimate owner stays enrolled.
+- This is why passkey rollouts still need endpoint hygiene, session-lifetime
+  controls, and device health signals. A passkey authenticates the human; it
+  does not disinfect the browser.
+
+### 3. Recovery flows
+
+Attackers read the docs too: if resetting access takes three steps and the
+first two are "call the helpdesk" and "read a code from SMS", the WebAuthn
+ceremony protecting step four is decoration. Real-world failure patterns:
+
+- Helpdesk/social-engineering resets — an attacker with enough personal data
+  gets a fresh enrollment of their own passkey on the victim's account.
+- Email/SMS verification codes used as recovery proof — reintroduces exactly
+  the phishable, interceptable factors passkeys removed.
+- Silent re-enrollment flows with no notification — victims find out days later.
+
+Account recovery is where strong authentication goes to die. If the recovery
+path is weaker than the login path, the recovery path *is* the login path.
+
+### 4. MFA bypass around the ceremony
+
+Two ways deployments leak despite good ceremonies:
+
+- **Weakest-factor-wins fallbacks.** Keep OTP or push-approval as an
+  alternative login method and every benefit above is optional. An AiTM kit
+  like Mirage2FA does not defeat WebAuthn — it goes around it, abusing M365
+  login flows and MFA-prompt bombing until someone approves. Kits like that
+  productized prompt fatigue at scale (~4,500 organizations reported hit).
+- **Post-auth session theft.** Modern kits increasingly do not need your
+  credentials at all: phish the session cookie after a legitimate login and the
+  strength of the ceremony that created the session is irrelevant. Passkeys
+  protect credential creation, not session lifetime.
+
+The pattern across all four surfaces: passkeys moved the wall, and attackers
+walked along it until they found where it ends.
+
+## Mitigations checklist for organizations
+
+For a rollout in 2026, ordered roughly by how often each item decides real
+incidents:
+
+**Credential policy**
+
+1. **Device-bound over synced where the stakes justify it.** Security keys or
+   platform device-bound passkeys for admins, executives, finance, and
+   privileged IT; synced consumer passkeys are acceptable for ordinary
+   workforce accounts *only if* items 3–8 below hold.
+2. **Retire weaker fallbacks on a schedule.** Once an account has a passkey,
+   SMS/email OTP and bare push approval should be disabled for it — not
+   discouraged, disabled. Weakest-factor-wins is the most common deployment
+   failure.
+3. **Attestation where you can.** Know which authenticators you accept so
+   "software authenticator running on an unknown VM" is a policy decision, not
+   an accident.
+
+**Recovery (the part everyone under-engineers)**
+
+4. **Make recovery as strong as login.** Verified identity re-enrollment with
+   human review for high-risk roles; never a bare email/SMS code.
+5. **No silent enrollments.** New credential registration triggers a user
+   notification out-of-band plus an audit event. A passkey the user didn't
+   register is the incident.
+6. **Delay windows + notifications on recovery changes.** Attackers want
+   speed; give victims a window to notice.
+
+**Session and endpoint**
+
+7. **Pair with conditional access / device health checks** for sensitive apps.
+   Passkeys stop credential theft; they do not stop malware riding an
+   authenticated session.
+8. **Short sessions + re-auth for high-risk actions** (payment runs, role
+   changes, bulk exports) rather than trusting one strong login indefinitely.
+
+**Operations**
+
+9. **Alert on registration events**, not just failed logins. Registration
+   volume is tiny compared to auth volume, which makes it high-signal.
+10. **Offboard credentials like access cards.** Device loss, termination, and
+    vendor offboarding include revoking registered passkeys — inventory them
+    per user.
+11. **Run breach-exposure checks on workforce accounts** (e.g., periodic HIBP
+    lookups during access reviews): breached passwords elsewhere still burn
+    the sync accounts your synced passkeys depend on.
+
+**Rollout sequencing**
+
+12. **Deploy phishing-resistant factors to the attacked groups first.** The
+    Mirage2FA wave hit organizations through MFA-prompt bombing — helpdesk and
+    executives see that first. Sequence by who gets attacked, not by
+    department chart order.
+
 ## Sources
 
 - The Hacker News, August 2026: [New passkey attacks can recover synced private keys / bypass phishing-resistant MFA](https://thehackernews.com/2026/08/new-passkey-attacks-can-recover-synced.html)
 - Mirage2FA AiTM kit vs ~4,500 US/EU orgs; WhatsApp shipping passkeys days later — reported August 2026 (AI/cyber research digest, 2026-08-26)
+
+## License
+
+[MIT](LICENSE)
